@@ -7,6 +7,7 @@ import {
     Text,
     ImageBackground,
     Image,
+    KeyboardAvoidingView,
 } from "react-native";
 import * as Permissions from "expo-permissions";
 import { BarCodeScanner } from "expo-barcode-scanner";
@@ -25,6 +26,8 @@ export default class TransactionScreen extends Component {
             domState: "normal",
             hasCameraPermissions: null,
             scanned: false,
+            bookName: "",
+            studentName: "",
         };
     }
 
@@ -56,28 +59,111 @@ export default class TransactionScreen extends Component {
         }
     };
 
-    handleTransaction = () => {
-        const { bookId } = this.state;
+    handleTransaction = async () => {
+        const { bookId, studentId } = this.state;
+        await this.getBookDetails(bookId);
+        await this.getStudentDetails(studentId);
         db.collections("books")
             .doc(bookId)
             .get()
             .then((doc) => {
                 console.log(doc.data());
                 var book = doc.data();
+                var { bookName, studentName } = this.state;
                 if (book.isBookAvalable) {
-                    this.initiateBookIssue();
+                    this.initiateBookIssue(
+                        bookId,
+                        studentId,
+                        bookName,
+                        studentName
+                    );
                 } else {
-                    this.initiateBookReturn();
+                    this.initiateBookReturn(
+                        bookId,
+                        studentId,
+                        bookName,
+                        studentName
+                    );
                 }
             });
     };
 
-    initiateBookIssue = () => {
-        console.log("Book Issued");
+    getBookDetails = (book_id) => {
+        book_id = book_id.trim();
+        db.collections("books")
+            .where("bookId", "==", book_id)
+            .get()
+            .then((snapshot) => {
+                snapshot.docs.map((doc) => {
+                    this.setState({
+                        bookName: doc.data().bookDetails.bookName,
+                    });
+                });
+            });
     };
 
-    initiateBookReturn = () => {
-        console.log("Book Returned");
+    studentDetails = (student_id) => {
+        student_id = student_id.trim();
+        db.collections("students")
+            .where("studentId", "==", student_id)
+            .get()
+            .then((snapshot) => {
+                snapshot.docs.map((doc) => {
+                    this.setState({
+                        studentName: doc.data().studentDetails.studentName,
+                    });
+                });
+            });
+    };
+
+    initiateBookIssue = async (bookId, studentId, bookName, studentName) => {
+        db.collections("transactions").add({
+            studentId: studentId,
+            bookId: bookId,
+            bookName: bookName,
+            studentName: studentName,
+            date: firebase.firestore.Timestamp.now().toDate(),
+            transactionType: "issue",
+        });
+
+        db.collections("books").doc(bookId).update({
+            isBookAvalable: false,
+        });
+
+        db.collections("students")
+            .doc(studentId)
+            .update({
+                numberOfBooks: firebase.firestore.FieldValue.increment(1),
+            });
+        this.setState({
+            bookId: "",
+            studentId: "",
+        });
+    };
+
+    initiateBookReturn = async (bookId, studentId, bookName, studentName) => {
+        db.collections("transactions").add({
+            studentId: studentId,
+            bookId: bookId,
+            bookName: bookName,
+            studentName: studentName,
+            date: firebase.firestore.Timestamp.now().toDate(),
+            transactionType: "return",
+        });
+
+        db.collections("books").doc(bookId).update({
+            isBookAvalable: true,
+        });
+
+        db.collections("students")
+            .doc(studentId)
+            .update({
+                numberOfBooks: firebase.firestore.FieldValue.increment(-1),
+            });
+        this.setState({
+            bookId: "",
+            studentId: "",
+        });
     };
 
     render() {
@@ -92,8 +178,9 @@ export default class TransactionScreen extends Component {
                 />
             );
         }
+
         return (
-            <View style={styles.container}>
+            <KeyboardAvoidingView behavior="padding" style={styles.container}>
                 <ImageBackground source={bgImage} style={styles.bgImage}>
                     <View style={styles.upperContainer}>
                         <Image source={appIcon} style={styles.appIcon} />
@@ -145,7 +232,7 @@ export default class TransactionScreen extends Component {
                         </TouchableOpacity>
                     </View>
                 </ImageBackground>
-            </View>
+            </KeyboardAvoidingView>
         );
     }
 }
