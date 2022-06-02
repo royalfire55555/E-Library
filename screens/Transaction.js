@@ -8,6 +8,7 @@ import {
     ImageBackground,
     Image,
     KeyboardAvoidingView,
+    ToastAndroid,
 } from "react-native";
 import * as Permissions from "expo-permissions";
 import { BarCodeScanner } from "expo-barcode-scanner";
@@ -77,12 +78,20 @@ export default class TransactionScreen extends Component {
                         bookName,
                         studentName
                     );
+                    ToastAndroid.show(
+                        "Issued " + bookName + " to " + studentName,
+                        ToastAndroid.SHORT
+                    );
                 } else {
                     this.initiateBookReturn(
                         bookId,
                         studentId,
                         bookName,
                         studentName
+                    );
+                    ToastAndroid.show(
+                        "Returned " + bookName + " from " + studentName,
+                        ToastAndroid.SHORT
                     );
                 }
             });
@@ -193,6 +202,9 @@ export default class TransactionScreen extends Component {
                                 placeholder={"Book Id"}
                                 placeholderTextColor={"#FFFFFF"}
                                 value={bookId}
+                                onChangeText={(text) => {
+                                    this.setState({ bookId: text });
+                                }}
                             />
                             <TouchableOpacity
                                 style={styles.scanbutton}
@@ -214,6 +226,9 @@ export default class TransactionScreen extends Component {
                                 placeholder={"Student Id"}
                                 placeholderTextColor={"#FFFFFF"}
                                 value={studentId}
+                                onChangeText={(text) => {
+                                    this.setState({ studentId: text });
+                                }}
                             />
                             <TouchableOpacity
                                 style={styles.scanbutton}
