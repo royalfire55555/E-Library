@@ -141,7 +141,7 @@ export default class TransactionScreen extends Component {
         return isStudentEligible;
     };
 
-    checkStudentEligibilityForBookIssue = async (studentId) => {
+    checkStudentEligibilityForBookReturn = async (studentId) => {
         const studentRef = await db
             .collection("students")
             .doc("studentId", "==", studentId)
