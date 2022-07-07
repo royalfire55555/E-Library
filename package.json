@@ -23,6 +23,7 @@
     "react-dom": "17.0.2",
     "react-error-overlay": "^6.0.11",
     "react-native": "0.68.2",
+    "react-native-elements": "^3.4.2",
     "react-native-web": "0.17.7",
     "webpack-dev-server": "~3.11.0"
   },
